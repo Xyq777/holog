@@ -35,5 +35,5 @@ func main() {
 
 	err := errors.New("test error")
 	holog.Error("This is a test error", "error", err)
-
+	holog.Error("This is a test error 2", holog.HError(err)...)
 }
