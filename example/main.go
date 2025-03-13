@@ -15,6 +15,7 @@ func main() {
 		MaxAge:     30,
 		Compress:   false,
 	}))
+
 	// logger := holog.NewLogger("test-service", holog, holog.WithMode(holog.Dev), holog.WithFileWriter(&lumberjack.Logger{
 	// 	Filename:   "./zap.log",
 	// 	MaxSize:    10,

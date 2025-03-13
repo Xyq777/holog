@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/natefinch/lumberjack"
+
+	"github.com/ncuhome/holog/ingester"
 	"github.com/ncuhome/holog/level"
 	"github.com/ncuhome/holog/value"
 	"github.com/ncuhome/holog/zapLogger"
@@ -27,6 +29,7 @@ type logger struct {
 	prefix    []any
 	hasValuer bool
 	ctx       context.Context
+	ingester  ingester.Ingester
 }
 
 func NewLogger(serviceName string, opts ...Option) *logger {
@@ -34,6 +37,7 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 		lumberjackLogger: nil,
 		mode:             Prod,
 		fields:           []any{},
+		ingester:         ingester.NewO2Imgester(),
 	}
 	for _, opt := range opts {
 		opt(&options)
@@ -46,7 +50,8 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 	return &logger{logger: zapLogger.NewZappLogger(options.lumberjackLogger, uint8(options.mode)),
 		prefix:    prefix,
 		hasValuer: value.ContainsValuer(prefix),
-		ctx:       context.Background()}
+		ctx:       context.Background(),
+		ingester:  options.ingester}
 }
 
 type Option func(o *options)
@@ -57,6 +62,7 @@ type options struct {
 	mode             Mode
 	lumberjackLogger *lumberjack.Logger
 	fields           []any
+	ingester         ingester.Ingester
 }
 
 func WithFileWriter(lumberjackLogger *lumberjack.Logger) Option {
@@ -77,6 +83,12 @@ func WithFields(fields ...any) Option {
 	}
 	return func(o *options) {
 		o.fields = fields
+	}
+}
+
+func WithIngester(ingester ingester.Ingester) Option {
+	return func(o *options) {
+		o.ingester = ingester
 	}
 }
 
