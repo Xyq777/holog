@@ -2,6 +2,11 @@ package value
 
 import (
 	"context"
+	"time"
+)
+
+var (
+	DefaultTimestamp = Timestamp(time.RFC3339)
 )
 
 type Valuer func(ctx context.Context) any
@@ -29,4 +34,11 @@ func ContainsValuer(keyvals []any) bool {
 		}
 	}
 	return false
+}
+
+// Timestamp returns a timestamp Valuer with a custom time format.
+func Timestamp(layout string) Valuer {
+	return func(context.Context) any {
+		return time.Now().Format(layout)
+	}
 }

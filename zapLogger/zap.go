@@ -11,12 +11,10 @@ import (
 )
 
 type ZapLogger struct {
-	log  *zap.Logger
-	Sync func() error
+	log *zap.Logger
 }
 
 var DefaultEncoder = zapcore.EncoderConfig{
-	TimeKey:        "timestamp",
 	LevelKey:       "level",
 	NameKey:        "logger",
 	CallerKey:      "caller",
@@ -82,7 +80,7 @@ func newZapLoggerWithConfigs(encoder zapcore.EncoderConfig, level zap.AtomicLeve
 		}
 	}
 	zapLogger := zap.New(core, opts...)
-	return &ZapLogger{log: zapLogger, Sync: zapLogger.Sync}
+	return &ZapLogger{log: zapLogger}
 }
 func (logger *ZapLogger) Log(l level.Level, msg string, kvs ...any) {
 
@@ -112,7 +110,7 @@ func (logger *ZapLogger) Log(l level.Level, msg string, kvs ...any) {
 }
 
 func (logger *ZapLogger) Close() {
-	if err := logger.Sync(); err != nil {
+	if err := logger.log.Sync(); err != nil {
 		_, _ = os.Stderr.WriteString("failed to sync logger: " + err.Error() + "\n")
 	}
 }
