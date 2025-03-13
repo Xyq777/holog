@@ -32,6 +32,8 @@ func main() {
 WithFileWriter(lumberjackLogger *lumberjack.Logger)
 // 配置日志模式，Dev模式会以TEXT格式输出，Prod模式会以JSON格式输出，如无该选项则默认以JSON格式输出
 WithMode(mode Mode)
+//加入新字段
+WithFields(fields ...any)
 ```
 ```golang
 package main
@@ -71,5 +73,27 @@ func main() {
     holog.SetGlobal(logger)
     
     holog.Info("This is a log from a new global logger")
+```
+### 自定义输出字段
+加入普通字段：
+```golang
+	logger := holog.NewLogger("test-service", holog.WithFields("new_field", "new_value"))
+```
+加入运行时变化的字段（如时间戳、trace_id）：
+```golang
+	// 当前默认Valuer只有一个作为示例的DefaultTimestamp
+	logger := holog.NewLogger("test", holog.WithFields("ts", value.DefaultTimestamp))
+```
+若要自定义运行时字段，请参照 value/value.go：
+```golang
+	var (
+		DefaultTimestamp = Timestamp(time.RFC3339)
+	)
+
+	func Timestamp(layout string) Valuer {
+		return func(context.Context) any {
+			return time.Now().Format(layout)
+		}
+	}
 ```
 

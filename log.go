@@ -2,6 +2,7 @@ package holog
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/natefinch/lumberjack"
 	"github.com/ncuhome/holog/level"
@@ -32,6 +33,7 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 	options := options{
 		lumberjackLogger: nil,
 		mode:             Prod,
+		fields:           []any{},
 	}
 	for _, opt := range opts {
 		opt(&options)
@@ -40,6 +42,7 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 		"service", serviceName,
 		"timestamp", value.DefaultTimestamp,
 	}
+	prefix = append(prefix, options.fields...)
 	return &logger{logger: zapLogger.NewZappLogger(options.lumberjackLogger, uint8(options.mode)),
 		prefix:    prefix,
 		hasValuer: value.ContainsValuer(prefix),
@@ -53,6 +56,7 @@ type options struct {
 	// logger Logger
 	mode             Mode
 	lumberjackLogger *lumberjack.Logger
+	fields           []any
 }
 
 func WithFileWriter(lumberjackLogger *lumberjack.Logger) Option {
@@ -64,6 +68,15 @@ func WithFileWriter(lumberjackLogger *lumberjack.Logger) Option {
 func WithMode(mode Mode) Option {
 	return func(o *options) {
 		o.mode = mode
+	}
+}
+
+func WithFields(fields ...any) Option {
+	if len(fields) != 0 && len(fields)%2 != 0 {
+		panic(fmt.Sprintf("Keyvalues must appear in pairs: %v", fields...))
+	}
+	return func(o *options) {
+		o.fields = fields
 	}
 }
 
