@@ -29,7 +29,9 @@ func NewO2Imgester() *O2 {
 	}}
 }
 
-func (o2 *O2) Send(ctx context.Context, stream string, entry LogEntry) error {
+func (o2 *O2) Send(ctx context.Context, entry LogEntry) error {
+	stream, _ := entry["service"].(string)
+
 	jsonBody, err := json.Marshal(entry)
 	if err != nil {
 		zap.L().Error("json marshall failed", zap.Error(err))
@@ -55,7 +57,7 @@ func (o2 *O2) Send(ctx context.Context, stream string, entry LogEntry) error {
 	return nil
 }
 
-func (o2 *O2) SendBatch(ctx context.Context, stream string, entries []LogEntry) error {
+func (o2 *O2) SendBatch(ctx context.Context, entries []LogEntry) error {
 	// TODO
 	return nil
 }

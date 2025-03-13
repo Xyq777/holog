@@ -5,7 +5,9 @@ import (
 	"os"
 
 	"github.com/natefinch/lumberjack"
+	"github.com/ncuhome/holog/ingester"
 	"github.com/ncuhome/holog/level"
+	"github.com/ncuhome/holog/utils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -82,11 +84,11 @@ func newZapLoggerWithConfigs(encoder zapcore.EncoderConfig, level zap.AtomicLeve
 	zapLogger := zap.New(core, opts...)
 	return &ZapLogger{log: zapLogger}
 }
-func (logger *ZapLogger) Log(l level.Level, msg string, kvs ...any) {
+func (logger *ZapLogger) Log(l level.Level, msg string, kvs ...any) (ingester.LogEntry, error) {
 
 	if len(kvs)%2 != 0 {
 		logger.log.Warn(fmt.Sprint("Keyvalues must appear in pairs: ", kvs))
-		return
+		return nil, fmt.Errorf("keyvalues must appear in pairs: %v", kvs)
 	}
 	var data []zap.Field
 
@@ -107,6 +109,7 @@ func (logger *ZapLogger) Log(l level.Level, msg string, kvs ...any) {
 	case level.PanicLevel:
 		logger.log.Panic(msg, data...)
 	}
+	return utils.DataToLogEntry(kvs)
 }
 
 func (logger *ZapLogger) Close() {
