@@ -1,12 +1,10 @@
-package ingester
+package sink
 
-import (
-	"context"
-)
+import "context"
 
-type LogEntry map[string]interface{}
-
-type Ingester interface {
+type Sink interface {
 	Send(ctx context.Context, entry LogEntry) error
 	SendBatch(ctx context.Context, entries []LogEntry) error
 }
+
+type LogEntry map[string]interface{}

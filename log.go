@@ -6,8 +6,9 @@ import (
 
 	"github.com/natefinch/lumberjack"
 
-	"github.com/ncuhome/holog/ingester"
 	"github.com/ncuhome/holog/level"
+	"github.com/ncuhome/holog/sink"
+	"github.com/ncuhome/holog/sink/ingester"
 	"github.com/ncuhome/holog/value"
 	"github.com/ncuhome/holog/zapLogger"
 )
@@ -27,7 +28,7 @@ const (
 )
 
 type Logger interface {
-	Log(level level.Level, msg string, kvs ...any) (ingester.LogEntry, error)
+	Log(level level.Level, msg string, kvs ...any) (sink.LogEntry, error)
 	Close()
 }
 
@@ -37,7 +38,7 @@ type logger struct {
 	hasValuer bool
 	ctx       context.Context
 	mode      Mode
-	ingester  ingester.Ingester
+	sink      sink.Sink
 }
 
 func NewLogger(serviceName string, opts ...Option) *logger {
@@ -46,7 +47,7 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 		mode:             Dev,
 		style:            JSON,
 		fields:           []any{},
-		ingester:         ingester.NewO2Imgester(),
+		sink:             ingester.NewO2Imgester(),
 	}
 	for _, opt := range opts {
 		opt(&options)
@@ -61,7 +62,7 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 		hasValuer: value.ContainsValuer(prefix),
 		ctx:       context.Background(),
 		mode:      options.mode,
-		ingester:  options.ingester}
+		sink:      options.sink}
 }
 
 type Option func(o *options)
@@ -73,7 +74,7 @@ type options struct {
 	style            OutputStyle
 	lumberjackLogger *lumberjack.Logger
 	fields           []any
-	ingester         ingester.Ingester
+	sink             sink.Sink
 }
 
 func WithFileWriter(lumberjackLogger *lumberjack.Logger) Option {
@@ -103,9 +104,9 @@ func WithFields(fields ...any) Option {
 	}
 }
 
-func WithIngester(ingester ingester.Ingester) Option {
+func Withsink(sink sink.Sink) Option {
 	return func(o *options) {
-		o.ingester = ingester
+		o.sink = sink
 	}
 }
 
@@ -118,8 +119,8 @@ func (l *logger) Info(msg string, kvs ...any) {
 		value.BindValues(l.ctx, l.prefix)
 	}
 	logEntry, err := l.logger.Log(level.InfoLevel, msg, getKeyVals(l.prefix, kvs)...)
-	if l.ingester != nil && err != nil && l.mode == Prod {
-		l.ingester.Send(l.ctx, logEntry)
+	if l.sink != nil && err != nil && l.mode == Prod {
+		l.sink.Send(l.ctx, logEntry)
 	}
 }
 func (l *logger) Warn(msg string, kvs ...any) {
@@ -127,8 +128,8 @@ func (l *logger) Warn(msg string, kvs ...any) {
 		value.BindValues(l.ctx, l.prefix)
 	}
 	logEntry, err := l.logger.Log(level.WarnLevel, msg, getKeyVals(l.prefix, kvs)...)
-	if l.ingester != nil && err != nil && l.mode == Prod {
-		l.ingester.Send(l.ctx, logEntry)
+	if l.sink != nil && err != nil && l.mode == Prod {
+		l.sink.Send(l.ctx, logEntry)
 	}
 }
 func (l *logger) Debug(msg string, kvs ...any) {
@@ -136,8 +137,8 @@ func (l *logger) Debug(msg string, kvs ...any) {
 		value.BindValues(l.ctx, l.prefix)
 	}
 	logEntry, err := l.logger.Log(level.DebugLevel, msg, getKeyVals(l.prefix, kvs)...)
-	if l.ingester != nil && err != nil && l.mode == Prod {
-		l.ingester.Send(l.ctx, logEntry)
+	if l.sink != nil && err != nil && l.mode == Prod {
+		l.sink.Send(l.ctx, logEntry)
 	}
 }
 func (l *logger) Error(msg string, kvs ...any) {
@@ -145,8 +146,8 @@ func (l *logger) Error(msg string, kvs ...any) {
 		value.BindValues(l.ctx, l.prefix)
 	}
 	logEntry, err := l.logger.Log(level.ErrorLevel, msg, getKeyVals(l.prefix, kvs)...)
-	if l.ingester != nil && err != nil && l.mode == Prod {
-		l.ingester.Send(l.ctx, logEntry)
+	if l.sink != nil && err != nil && l.mode == Prod {
+		l.sink.Send(l.ctx, logEntry)
 	}
 }
 func (l *logger) Fatal(msg string, kvs ...any) {
@@ -154,8 +155,8 @@ func (l *logger) Fatal(msg string, kvs ...any) {
 		value.BindValues(l.ctx, l.prefix)
 	}
 	logEntry, err := l.logger.Log(level.FatalLevel, msg, getKeyVals(l.prefix, kvs)...)
-	if l.ingester != nil && err != nil && l.mode == Prod {
-		l.ingester.Send(l.ctx, logEntry)
+	if l.sink != nil && err != nil && l.mode == Prod {
+		l.sink.Send(l.ctx, logEntry)
 	}
 }
 func (l *logger) Panic(msg string, kvs ...any) {
@@ -163,8 +164,8 @@ func (l *logger) Panic(msg string, kvs ...any) {
 		value.BindValues(l.ctx, l.prefix)
 	}
 	logEntry, err := l.logger.Log(level.PanicLevel, msg, getKeyVals(l.prefix, kvs)...)
-	if l.ingester != nil && err != nil && l.mode == Prod {
-		l.ingester.Send(l.ctx, logEntry)
+	if l.sink != nil && err != nil && l.mode == Prod {
+		l.sink.Send(l.ctx, logEntry)
 	}
 }
 
