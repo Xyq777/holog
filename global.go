@@ -1,6 +1,8 @@
 package holog
 
-import "sync"
+import (
+	"sync"
+)
 
 var (
 	globalLogger     *logger

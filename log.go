@@ -19,6 +19,13 @@ const (
 	Prod
 )
 
+type OutputStyle uint8
+
+const (
+	JSON OutputStyle = iota
+	TEXT
+)
+
 type Logger interface {
 	Log(level level.Level, msg string, kvs ...any) (ingester.LogEntry, error)
 	Close()
@@ -36,7 +43,8 @@ type logger struct {
 func NewLogger(serviceName string, opts ...Option) *logger {
 	options := options{
 		lumberjackLogger: nil,
-		mode:             Prod,
+		mode:             Dev,
+		style:            JSON,
 		fields:           []any{},
 		ingester:         ingester.NewO2Imgester(),
 	}
@@ -48,7 +56,7 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 		"timestamp", value.DefaultTimestamp,
 	}
 	prefix = append(prefix, options.fields...)
-	return &logger{logger: zapLogger.NewZappLogger(options.lumberjackLogger, uint8(options.mode)),
+	return &logger{logger: zapLogger.NewZappLogger(options.lumberjackLogger, uint8(options.style)),
 		prefix:    prefix,
 		hasValuer: value.ContainsValuer(prefix),
 		ctx:       context.Background(),
@@ -62,6 +70,7 @@ type Option func(o *options)
 type options struct {
 	// logger Logger
 	mode             Mode
+	style            OutputStyle
 	lumberjackLogger *lumberjack.Logger
 	fields           []any
 	ingester         ingester.Ingester
@@ -76,6 +85,12 @@ func WithFileWriter(lumberjackLogger *lumberjack.Logger) Option {
 func WithMode(mode Mode) Option {
 	return func(o *options) {
 		o.mode = mode
+	}
+}
+
+func WithOutputStyle(style OutputStyle) Option {
+	return func(o *options) {
+		o.style = style
 	}
 }
 

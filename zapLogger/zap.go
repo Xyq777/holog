@@ -47,12 +47,12 @@ func getLogWriter(lumberJackLogger *lumberjack.Logger) zapcore.WriteSyncer {
 	return zapcore.AddSync(lumberJackLogger)
 }
 
-func newZapLoggerWithConfigs(encoder zapcore.EncoderConfig, level zap.AtomicLevel, lumberJackLogger *lumberjack.Logger, mode uint8, opts ...zap.Option) *ZapLogger {
+func newZapLoggerWithConfigs(encoder zapcore.EncoderConfig, level zap.AtomicLevel, lumberJackLogger *lumberjack.Logger, style uint8, opts ...zap.Option) *ZapLogger {
 	level.SetLevel(zap.InfoLevel)
 	var core zapcore.Core
 	if lumberJackLogger != nil {
 		writeSyncer := getLogWriter(lumberJackLogger)
-		if mode != 0 {
+		if style != 1 {
 			core = zapcore.NewCore(
 				zapcore.NewJSONEncoder(encoder),
 				zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(writeSyncer)),
@@ -67,7 +67,7 @@ func newZapLoggerWithConfigs(encoder zapcore.EncoderConfig, level zap.AtomicLeve
 		}
 
 	} else {
-		if mode != 0 {
+		if style != 1 {
 			core = zapcore.NewCore(
 				zapcore.NewJSONEncoder(encoder),
 				zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)),
@@ -113,7 +113,8 @@ func (logger *ZapLogger) Log(l level.Level, msg string, kvs ...any) (ingester.Lo
 }
 
 func (logger *ZapLogger) Close() {
+	// TODO?
 	if err := logger.log.Sync(); err != nil {
-		_, _ = os.Stderr.WriteString("failed to sync logger: " + err.Error() + "\n")
+
 	}
 }
