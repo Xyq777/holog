@@ -5,7 +5,9 @@ import (
 	"os"
 
 	"github.com/natefinch/lumberjack"
+	"github.com/ncuhome/holog/ingester"
 	"github.com/ncuhome/holog/level"
+	"github.com/ncuhome/holog/utils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -45,12 +47,12 @@ func getLogWriter(lumberJackLogger *lumberjack.Logger) zapcore.WriteSyncer {
 	return zapcore.AddSync(lumberJackLogger)
 }
 
-func newZapLoggerWithConfigs(encoder zapcore.EncoderConfig, level zap.AtomicLevel, lumberJackLogger *lumberjack.Logger, mode uint8, opts ...zap.Option) *ZapLogger {
+func newZapLoggerWithConfigs(encoder zapcore.EncoderConfig, level zap.AtomicLevel, lumberJackLogger *lumberjack.Logger, style uint8, opts ...zap.Option) *ZapLogger {
 	level.SetLevel(zap.InfoLevel)
 	var core zapcore.Core
 	if lumberJackLogger != nil {
 		writeSyncer := getLogWriter(lumberJackLogger)
-		if mode != 0 {
+		if style != 1 {
 			core = zapcore.NewCore(
 				zapcore.NewJSONEncoder(encoder),
 				zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(writeSyncer)),
@@ -65,7 +67,7 @@ func newZapLoggerWithConfigs(encoder zapcore.EncoderConfig, level zap.AtomicLeve
 		}
 
 	} else {
-		if mode != 0 {
+		if style != 1 {
 			core = zapcore.NewCore(
 				zapcore.NewJSONEncoder(encoder),
 				zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)),
@@ -82,11 +84,11 @@ func newZapLoggerWithConfigs(encoder zapcore.EncoderConfig, level zap.AtomicLeve
 	zapLogger := zap.New(core, opts...)
 	return &ZapLogger{log: zapLogger}
 }
-func (logger *ZapLogger) Log(l level.Level, msg string, kvs ...any) {
+func (logger *ZapLogger) Log(l level.Level, msg string, kvs ...any) (ingester.LogEntry, error) {
 
 	if len(kvs)%2 != 0 {
 		logger.log.Warn(fmt.Sprint("Keyvalues must appear in pairs: ", kvs))
-		return
+		return nil, fmt.Errorf("keyvalues must appear in pairs: %v", kvs)
 	}
 	var data []zap.Field
 
@@ -107,10 +109,12 @@ func (logger *ZapLogger) Log(l level.Level, msg string, kvs ...any) {
 	case level.PanicLevel:
 		logger.log.Panic(msg, data...)
 	}
+	return utils.DataToLogEntry(kvs)
 }
 
 func (logger *ZapLogger) Close() {
+	// TODO?
 	if err := logger.log.Sync(); err != nil {
-		_, _ = os.Stderr.WriteString("failed to sync logger: " + err.Error() + "\n")
+
 	}
 }
