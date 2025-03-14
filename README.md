@@ -62,38 +62,36 @@ func main() {
 ```
 ### 将自定义 *logger* 配置到全局
 ```golang
-    logger := holog.NewLogger("test-service", holog.WithFileWriter(&lumberjack.Logger{
-		Filename:   "./zap.log",
-		MaxSize:    10,
-		MaxBackups: 5,
-		MaxAge:     30,
-		Compress:   false,
-	}))
+logger := holog.NewLogger("test-service", holog.WithFileWriter(&lumberjack.Logger{
+	Filename:   "./zap.log",
+	MaxSize:    10,
+	MaxBackups: 5,
+	MaxAge:     30,
+	Compress:   false,
+}))
+holog.SetGlobal(logger)
 
-    holog.SetGlobal(logger)
-    
-    holog.Info("This is a log from a new global logger")
+holog.Info("This is a log from a new global logger")
 ```
 ### 自定义输出字段
 加入普通字段：
 ```golang
-	logger := holog.NewLogger("test-service", holog.WithFields("new_field", "new_value"))
+logger := holog.NewLogger("test-service", holog.WithFields("new_key", "new_value"))
 ```
 加入运行时变化的字段（如时间戳、trace_id）：
 ```golang
-	// 当前默认Valuer只有一个作为示例的DefaultTimestamp
-	logger := holog.NewLogger("test", holog.WithFields("ts", value.DefaultTimestamp))
+// 当前默认Valuer只有一个作为示例的DefaultTimestamp
+logger := holog.NewLogger("test", holog.WithFields("ts", value.DefaultTimestamp))
 ```
 若要自定义运行时字段，请参照 value/value.go：
 ```golang
-	var (
-		DefaultTimestamp = Timestamp(time.RFC3339)
-	)
-
-	func Timestamp(layout string) Valuer {
-		return func(context.Context) any {
-			return time.Now().Format(layout)
-		}
+var (
+	DefaultTimestamp = Timestamp(time.RFC3339)
+)
+func Timestamp(layout string) Valuer {
+	return func(context.Context) any {
+		return time.Now().Format(layout)
 	}
+}
 ```
 
