@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	logger := holog.NewLogger("test-service", , holog.WithFields("new_field", "new_value"), holog.WithFileWriter(&lumberjack.Logger{
+	logger := holog.NewLogger("test-service", holog.WithFields("new_field", "new_value"), holog.WithFileWriter(&lumberjack.Logger{
 		Filename:   "./zap.log",
 		MaxSize:    10,
 		MaxBackups: 5,

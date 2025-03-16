@@ -3,10 +3,10 @@ package utils
 import (
 	"fmt"
 
-	"github.com/ncuhome/holog/ingester"
+	"github.com/ncuhome/holog/sink"
 )
 
-func DataToLogEntry(data []any) (ingester.LogEntry, error) {
+func DataToLogEntry(data []any) (sink.LogEntry, error) {
 	result := make(map[string]interface{})
 	for i := 0; i < len(data); i += 2 {
 		key, ok := data[i].(string)

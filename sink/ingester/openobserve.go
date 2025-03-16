@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ncuhome/holog/sink"
 	"go.uber.org/zap"
 )
 
@@ -29,7 +30,7 @@ func NewO2Imgester() *O2 {
 	}}
 }
 
-func (o2 *O2) Send(ctx context.Context, entry LogEntry) error {
+func (o2 *O2) Send(ctx context.Context, entry sink.LogEntry) error {
 	stream, _ := entry["service"].(string)
 
 	jsonBody, err := json.Marshal(entry)
@@ -57,7 +58,7 @@ func (o2 *O2) Send(ctx context.Context, entry LogEntry) error {
 	return nil
 }
 
-func (o2 *O2) SendBatch(ctx context.Context, entries []LogEntry) error {
+func (o2 *O2) SendBatch(ctx context.Context, entries []sink.LogEntry) error {
 	// TODO
 	return nil
 }
