@@ -104,7 +104,7 @@ func WithFields(fields ...any) Option {
 	}
 }
 
-func Withsink(sink sink.Sink) Option {
+func WithSink(sink sink.Sink) Option {
 	return func(o *options) {
 		o.sink = sink
 	}
