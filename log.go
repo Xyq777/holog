@@ -115,55 +115,61 @@ func (l *logger) Close() {
 }
 
 func (l *logger) Info(msg string, kvs ...any) {
+	keyvals := getKeyVals(l.prefix, kvs)
 	if l.hasValuer {
-		value.BindValues(l.ctx, l.prefix)
+		value.BindValues(l.ctx, keyvals)
 	}
-	logEntry, err := l.logger.Log(level.InfoLevel, msg, getKeyVals(l.prefix, kvs)...)
+	logEntry, err := l.logger.Log(level.InfoLevel, msg, keyvals...)
 	if l.sink != nil && err != nil && l.mode == Prod {
 		l.sink.Send(l.ctx, logEntry)
 	}
 }
 func (l *logger) Warn(msg string, kvs ...any) {
+	keyvals := getKeyVals(l.prefix, kvs)
 	if l.hasValuer {
-		value.BindValues(l.ctx, l.prefix)
+		value.BindValues(l.ctx, keyvals)
 	}
-	logEntry, err := l.logger.Log(level.WarnLevel, msg, getKeyVals(l.prefix, kvs)...)
+	logEntry, err := l.logger.Log(level.InfoLevel, msg, keyvals...)
 	if l.sink != nil && err != nil && l.mode == Prod {
 		l.sink.Send(l.ctx, logEntry)
 	}
 }
 func (l *logger) Debug(msg string, kvs ...any) {
+	keyvals := getKeyVals(l.prefix, kvs)
 	if l.hasValuer {
-		value.BindValues(l.ctx, l.prefix)
+		value.BindValues(l.ctx, keyvals)
 	}
-	logEntry, err := l.logger.Log(level.DebugLevel, msg, getKeyVals(l.prefix, kvs)...)
+	logEntry, err := l.logger.Log(level.InfoLevel, msg, keyvals...)
 	if l.sink != nil && err != nil && l.mode == Prod {
 		l.sink.Send(l.ctx, logEntry)
 	}
 }
 func (l *logger) Error(msg string, kvs ...any) {
+	keyvals := getKeyVals(l.prefix, kvs)
 	if l.hasValuer {
-		value.BindValues(l.ctx, l.prefix)
+		value.BindValues(l.ctx, keyvals)
 	}
-	logEntry, err := l.logger.Log(level.ErrorLevel, msg, getKeyVals(l.prefix, kvs)...)
+	logEntry, err := l.logger.Log(level.InfoLevel, msg, keyvals...)
 	if l.sink != nil && err != nil && l.mode == Prod {
 		l.sink.Send(l.ctx, logEntry)
 	}
 }
 func (l *logger) Fatal(msg string, kvs ...any) {
+	keyvals := getKeyVals(l.prefix, kvs)
 	if l.hasValuer {
-		value.BindValues(l.ctx, l.prefix)
+		value.BindValues(l.ctx, keyvals)
 	}
-	logEntry, err := l.logger.Log(level.FatalLevel, msg, getKeyVals(l.prefix, kvs)...)
+	logEntry, err := l.logger.Log(level.InfoLevel, msg, keyvals...)
 	if l.sink != nil && err != nil && l.mode == Prod {
 		l.sink.Send(l.ctx, logEntry)
 	}
 }
 func (l *logger) Panic(msg string, kvs ...any) {
+	keyvals := getKeyVals(l.prefix, kvs)
 	if l.hasValuer {
-		value.BindValues(l.ctx, l.prefix)
+		value.BindValues(l.ctx, keyvals)
 	}
-	logEntry, err := l.logger.Log(level.PanicLevel, msg, getKeyVals(l.prefix, kvs)...)
+	logEntry, err := l.logger.Log(level.InfoLevel, msg, keyvals...)
 	if l.sink != nil && err != nil && l.mode == Prod {
 		l.sink.Send(l.ctx, logEntry)
 	}
