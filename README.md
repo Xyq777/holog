@@ -37,7 +37,7 @@ func main() {
 * WithFields(fields ...any)\
  说明：添加自定义输出字段，至少传入偶数个参数，参数为 *key-value* 对，*key* 为 *string* 类型，*value* 为任意类型（后文会说明如何添加运行时变化的字段，如 *trace_id*）
 * WithSink(sink Sink)\
- 说明：自定义日志输出端，默认是 *OpenObserve* 只有 *Mode* 为 *holog.Prod* 时才会生效，则不会将日志输出到外部端，
+ 说明：自定义日志输出端，默认是 *nil* ， 只有 *Mode* 为 *holog.Prod* 时才会生效，否则不会将日志输出到外部端
 
 ```golang
 package main
@@ -98,6 +98,19 @@ func Timestamp(layout string) Valuer {
 	}
 }
 ```
+### Gin日志中间件
+```golang
+logger := holog.NewLogger("test-service")
+r := gin.New()
+r.Use(holog.HologGinRequestLogging(logger))
+r.GET("/ping", func(c *gin.Context) {
+	fmt.Println("Received /ping request")
+	time.Sleep(500 * time.Millisecond) 
+	c.JSON(200, gin.H{
+		"message": "pong",
+	})
+})
+```
 ## 接口
 ```golang
 // 创建logger并使用
@@ -133,6 +146,9 @@ type Sink interface {
 	Send(ctx context.Context, entry LogEntry) error
 	SendBatch(ctx context.Context, entries []LogEntry) error
 }
+
+// Gin日志中间件
+func HologGinRequestLogging(logger *logger) gin.HandlerFunc 
 
 ```
 

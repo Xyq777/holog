@@ -8,7 +8,6 @@ import (
 
 	"github.com/ncuhome/holog/level"
 	"github.com/ncuhome/holog/sink"
-	"github.com/ncuhome/holog/sink/ingester"
 	"github.com/ncuhome/holog/value"
 	"github.com/ncuhome/holog/zapLogger"
 )
@@ -47,7 +46,7 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 		mode:             Dev,
 		style:            JSON,
 		fields:           []any{},
-		sink:             ingester.NewO2Imgester(),
+		sink:             nil,
 	}
 	for _, opt := range opts {
 		opt(&options)
