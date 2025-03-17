@@ -20,7 +20,7 @@ func HologGinRequestLogging(logger *logger) gin.HandlerFunc {
 
 		c.Next()
 
-		latency := fmt.Sprintf("%.2fms", float64(time.Since(startTime).Microseconds()/1000.0))
+		latency := fmt.Sprintf("%.2fms", float32(time.Since(startTime).Microseconds())/1000.0)
 		if c.Writer.Status() >= 400 {
 			logger.Error("Request",
 				"status", c.Writer.Status(),
