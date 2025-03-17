@@ -10,7 +10,7 @@ import (
 
 func main() {
 	logger := holog.NewLogger("test-service", holog.WithFields("ts", value.DefaultTimestamp), holog.WithFileWriter(&lumberjack.Logger{
-		Filename:   "./zap.log",
+		Filename:   "./holog.log",
 		MaxSize:    10,
 		MaxBackups: 5,
 		MaxAge:     30,

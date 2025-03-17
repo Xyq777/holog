@@ -30,6 +30,10 @@ func SetGlobal(newLogger *logger) {
 	old.Close()
 }
 
+func GetGlobal() *logger {
+	return getGlobal()
+}
+
 // Global methos
 func Info(msg string, kvs ...any) {
 	getGlobal().Info(msg, kvs...)
