@@ -98,6 +98,19 @@ func Timestamp(layout string) Valuer {
 	}
 }
 ```
+### Gin日志中间件
+```golang
+logger := holog.NewLogger("test-service")
+r := gin.New()
+r.Use(holog.HologGinRequestLogging(logger))
+r.GET("/ping", func(c *gin.Context) {
+	fmt.Println("Received /ping request")
+	time.Sleep(500 * time.Millisecond) 
+	c.JSON(200, gin.H{
+		"message": "pong",
+	})
+})
+```
 ## 接口
 ```golang
 // 创建logger并使用
@@ -133,6 +146,9 @@ type Sink interface {
 	Send(ctx context.Context, entry LogEntry) error
 	SendBatch(ctx context.Context, entries []LogEntry) error
 }
+
+// Gin日志中间件
+func HologGinRequestLogging(logger *logger) gin.HandlerFunc 
 
 ```
 
