@@ -54,6 +54,7 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 	prefix := []any{
 		"service", serviceName,
 		"timestamp", value.DefaultTimestamp,
+		"caller", value.DefaultCaller,
 	}
 	prefix = append(prefix, options.fields...)
 	return &logger{logger: zapLogger.NewZappLogger(options.lumberjackLogger, uint8(options.style)),

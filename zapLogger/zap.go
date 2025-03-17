@@ -19,14 +19,12 @@ type ZapLogger struct {
 var DefaultEncoder = zapcore.EncoderConfig{
 	LevelKey:       "level",
 	NameKey:        "logger",
-	CallerKey:      "caller",
 	MessageKey:     "message",
 	StacktraceKey:  "stack",
-	EncodeTime:     zapcore.RFC3339TimeEncoder,
+	EncodeCaller:   zapcore.FullCallerEncoder,
 	LineEnding:     zapcore.DefaultLineEnding,
 	EncodeLevel:    zapcore.CapitalLevelEncoder,
 	EncodeDuration: zapcore.SecondsDurationEncoder,
-	EncodeCaller:   zapcore.FullCallerEncoder,
 }
 
 func NewZappLogger(lumberjackLogger *lumberjack.Logger, mode uint8) *ZapLogger {
