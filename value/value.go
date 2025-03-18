@@ -11,7 +11,7 @@ import (
 var (
 	DefaultTimestamp = Timestamp(time.RFC3339)
 
-	DefaultCaller = Caller(4)
+	DefaultCaller = Caller(3)
 )
 
 type Valuer func(ctx context.Context) any

@@ -18,9 +18,13 @@ func main() {
 		MaxAge:     30,
 		Compress:   false,
 	}))
-	r := gin.New()
-	r.Use(holog.HologGinRequestLogging(logger))
 
+	logger.Error("errrrrrrrrrrrr")
+
+	logger.Info("www")
+	r := gin.New()
+
+	r.Use(holog.HologGinRequestLogging(logger))
 	r.GET("/ping", func(c *gin.Context) {
 		fmt.Println("Received /ping request")
 		time.Sleep(500 * time.Millisecond)
