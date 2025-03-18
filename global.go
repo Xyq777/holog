@@ -1,6 +1,7 @@
 package holog
 
 import (
+	"context"
 	"sync"
 )
 
@@ -32,6 +33,16 @@ func SetGlobal(newLogger *logger) {
 
 func GetGlobal() *logger {
 	return getGlobal()
+}
+
+func CopyGlobal() *logger {
+	return getGlobal().copy()
+}
+
+func CopyGlobalWithContext(ctx context.Context) *logger {
+	logger := getGlobal().copy()
+	logger.ctx = ctx
+	return logger
 }
 
 // Global methos
