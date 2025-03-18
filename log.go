@@ -8,6 +8,7 @@ import (
 
 	"github.com/ncuhome/holog/level"
 	"github.com/ncuhome/holog/sink"
+	"github.com/ncuhome/holog/tracing"
 	"github.com/ncuhome/holog/value"
 	"github.com/ncuhome/holog/zapLogger"
 )
@@ -55,6 +56,7 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 		"service", serviceName,
 		"timestamp", value.DefaultTimestamp,
 		"caller", value.DefaultCaller,
+		"trace_id", tracing.TraceID(),
 	}
 	prefix = append(prefix, options.fields...)
 	return &logger{logger: zapLogger.NewZappLogger(options.lumberjackLogger, uint8(options.style)),
@@ -112,6 +114,17 @@ func WithSink(sink sink.Sink) Option {
 
 func (l *logger) Close() {
 	l.logger.Close()
+}
+
+func (l *logger) copy() *logger {
+	return &logger{
+		logger:    l.logger,
+		prefix:    l.prefix,
+		hasValuer: l.hasValuer,
+		ctx:       l.ctx,
+		mode:      l.mode,
+		sink:      l.sink,
+	}
 }
 
 func (l *logger) Info(msg string, kvs ...any) {

@@ -1,4 +1,4 @@
-package holog
+package hogin
 
 import (
 	"bytes"
@@ -7,11 +7,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ncuhome/holog"
 )
 
-func HologGinRequestLogging(logger *logger) gin.HandlerFunc {
+func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
+		logger := holog.FromGinContext(c)
+		if logger == nil {
+			logger = holog.GetGlobal()
+		}
 		startTime := time.Now()
 
 		reqBodyBytes, _ := io.ReadAll(c.Request.Body)
