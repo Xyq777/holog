@@ -2,6 +2,7 @@ package holog
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -64,4 +65,25 @@ func Fatal(msg string, kvs ...any) {
 }
 func Panic(msg string, kvs ...any) {
 	getGlobal().Panic(msg, kvs...)
+}
+
+func Infof(format string, args ...any) {
+	getGlobal().Info(fmt.Sprintf(format, args...))
+}
+
+func Debugf(format string, args ...any) {
+	fmt.Println("到这")
+	getGlobal().Debug(fmt.Sprintf(format, args...))
+}
+func Warnf(format string, args ...any) {
+	getGlobal().Warn(fmt.Sprintf(format, args...))
+}
+func Errorf(format string, args ...any) {
+	getGlobal().Error(fmt.Sprintf(format, args...))
+}
+func Fatalf(format string, args ...any) {
+	getGlobal().Fatal(fmt.Sprintf(format, args...))
+}
+func Panicf(format string, args ...any) {
+	getGlobal().Panic(fmt.Sprintf(format, args...))
 }
