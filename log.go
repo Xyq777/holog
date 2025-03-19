@@ -188,6 +188,28 @@ func (l *logger) Panic(msg string, kvs ...any) {
 	}
 }
 
+func (l *logger) Infof(format string, args ...any) {
+	l.Info(fmt.Sprintf(format, args...))
+}
+
+func (l *logger) Debugf(format string, args ...any) {
+	l.Debug(fmt.Sprintf(format, args...))
+}
+
+func (l *logger) Warnf(format string, args ...any) {
+	l.Warn(fmt.Sprintf(format, args...))
+}
+func (l *logger) Errorf(format string, args ...any) {
+	l.Error(fmt.Sprintf(format, args...))
+}
+func (l *logger) Fatalf(format string, args ...any) {
+	l.Fatal(fmt.Sprintf(format, args...))
+}
+
+func (l *logger) Panicf(format string, args ...any) {
+	l.Panic(fmt.Sprintf(format, args...))
+}
+
 func getKeyVals(prefix []any, kvs []any) []any {
 	keyvals := make([]any, 0, len(prefix)+len(kvs))
 	keyvals = append(keyvals, prefix...)

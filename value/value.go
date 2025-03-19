@@ -11,7 +11,7 @@ import (
 var (
 	DefaultTimestamp = Timestamp(time.RFC3339)
 
-	DefaultCaller = Caller(3)
+	DefaultCaller = Caller()
 )
 
 type Valuer func(ctx context.Context) any
@@ -49,14 +49,25 @@ func Timestamp(layout string) Valuer {
 }
 
 // Caller returns a Valuer that returns a pkg/file:line description of the caller.
-func Caller(depth int) Valuer {
+func Caller() Valuer {
 	return func(context.Context) any {
-		_, file, line, _ := runtime.Caller(depth)
-		idx := strings.LastIndexByte(file, '/')
-		if idx == -1 {
-			return file[idx+1:] + ":" + strconv.Itoa(line)
+		depth := 3
+		maxDepth := 7
+		for {
+			if depth > maxDepth {
+				return ""
+			}
+			_, file, line, _ := runtime.Caller(depth)
+			idx := strings.LastIndexByte(file, '/')
+			if idx == -1 {
+				return file[idx+1:] + ":" + strconv.Itoa(line)
+			}
+			idx = strings.LastIndexByte(file[:idx], '/')
+			if file[idx+1:] == "holog/global.go" {
+				depth++
+			} else {
+				return file[idx+1:] + ":" + strconv.Itoa(line)
+			}
 		}
-		idx = strings.LastIndexByte(file[:idx], '/')
-		return file[idx+1:] + ":" + strconv.Itoa(line)
 	}
 }

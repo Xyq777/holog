@@ -15,6 +15,7 @@ func TraceID() value.Valuer {
 		return ""
 	}
 }
+
 func SpanID() value.Valuer {
 	return func(ctx context.Context) any {
 		if span := trace.SpanContextFromContext(ctx); span.HasSpanID() {

@@ -17,7 +17,6 @@ func Logger() gin.HandlerFunc {
 			logger = holog.GetGlobal()
 		}
 		startTime := time.Now()
-
 		reqBodyBytes, _ := io.ReadAll(c.Request.Body)
 		c.Request.Body = io.NopCloser(bytes.NewBuffer(reqBodyBytes))
 		reqBodyString := string(reqBodyBytes)
