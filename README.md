@@ -98,19 +98,64 @@ func Timestamp(layout string) Valuer {
 	}
 }
 ```
-### Gin日志中间件
+## 中间件
+### Gin
 ```golang
-logger := holog.NewLogger("test-service")
-r := gin.New()
-r.Use(holog.HologGinRequestLogging(logger))
-r.GET("/ping", func(c *gin.Context) {
-	fmt.Println("Received /ping request")
-	time.Sleep(500 * time.Millisecond) 
-	c.JSON(200, gin.H{
-		"message": "pong",
-	})
-})
+// 将Gin请求纳入trace
+func Trace() gin.HandlerFunc
+// 启用Gin请求日志
+func Logger() gin.HandlerFunc
 ```
+#### 示例
+```golang
+package main
+
+import (
+    "context"
+
+    "github.com/gin-gonic/gin"
+    "github.com/ncuhome/holog"
+    "github.com/ncuhome/holog/middleware/hogin"
+    "go.opentelemetry.io/otel"
+    "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+    "go.opentelemetry.io/otel/sdk/resource"
+    sdktrace "go.opentelemetry.io/otel/sdk/trace"
+    semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+)
+
+// 若不需要trace后端（jaeger等），该函数可以不写
+// 若不写该函数，holog会使用雪花算法生成一个trace_id
+func initTracer() {
+    exporter, err := otlptracehttp.New(context.Background(), otlptracehttp.WithEndpoint("localhost:4318"), otlptracehttp.WithInsecure())
+    if err != nil {
+        panic(err)
+    }
+    tp := sdktrace.NewTracerProvider(
+        sdktrace.WithBatcher(exporter),
+        sdktrace.WithResource(resource.NewWithAttributes(
+            semconv.SchemaURL,
+            semconv.ServiceNameKey.String("your-service"),
+        )),
+    )
+    otel.SetTracerProvider(tp)
+}
+
+func main() {
+    initTracer()
+    r := gin.New()
+    // 注意！！如果要给后续中间件内输出的日志带上trace_id，请把holog.Trace()放在第一位
+    // 自定义中间件内日志如何输出trace_id，请参考Electric-be项目的Auth()中间件的写法（其实和handler里写法一样）
+    r.Use(hogin.Trace(), hogin.Logger())
+    r.GET("/", func(c *gin.Context) {
+        // 注意！！如果要让一笔请求中输出的所有日志带上trace_id，请按照以下写法而不要使用全局logger：
+        logger := holog.FromGinContext(c)
+        logger.Info("12345")
+
+    })
+    r.Run(":8080")
+}
+```
+
 ## 接口
 ```golang
 // 创建logger并使用

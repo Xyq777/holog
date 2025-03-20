@@ -31,6 +31,8 @@ func main() {
 
 	// holog.Error("This is a test error in default global holog logger")
 
+	logger.Infof("opop")
+
 	holog.SetGlobal(logger)
 	holog.Info("This is a test error in customized global holog logger")
 
