@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/natefinch/lumberjack"
-
 	"github.com/ncuhome/holog/level"
 	"github.com/ncuhome/holog/sink"
 	"github.com/ncuhome/holog/tracing"
 	"github.com/ncuhome/holog/value"
 	"github.com/ncuhome/holog/zapLogger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 )
 
 type Mode uint8
@@ -48,6 +48,7 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 		style:            JSON,
 		fields:           []any{},
 		sink:             nil,
+		exporter:         nil,
 	}
 	for _, opt := range opts {
 		opt(&options)
@@ -60,7 +61,7 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 		"span_id", tracing.SpanID(),
 	}
 	prefix = append(prefix, options.fields...)
-	return &logger{logger: zapLogger.NewZappLogger(options.lumberjackLogger, uint8(options.style)),
+	return &logger{logger: zapLogger.NewZappLogger(options.lumberjackLogger, options.exporter, serviceName, uint8(options.style)),
 		prefix:    prefix,
 		hasValuer: value.ContainsValuer(prefix),
 		ctx:       context.Background(),
@@ -78,9 +79,11 @@ type options struct {
 	lumberjackLogger *lumberjack.Logger
 	fields           []any
 	sink             sink.Sink
+	exporter         *otlploghttp.Exporter
 }
 
 func WithFileWriter(lumberjackLogger *lumberjack.Logger) Option {
+
 	return func(o *options) {
 		o.lumberjackLogger = lumberjackLogger
 	}
@@ -95,6 +98,12 @@ func WithMode(mode Mode) Option {
 func WithOutputStyle(style OutputStyle) Option {
 	return func(o *options) {
 		o.style = style
+	}
+}
+
+func WithExporter(exporter *otlploghttp.Exporter) Option {
+	return func(o *options) {
+		o.exporter = exporter
 	}
 }
 

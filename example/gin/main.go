@@ -15,7 +15,6 @@ import (
 )
 
 func initTracer() {
-
 	exporter, err := otlptracehttp.New(context.Background(), otlptracehttp.WithEndpoint("localhost:4318"), otlptracehttp.WithInsecure())
 	if err != nil {
 		panic(err)

@@ -38,7 +38,8 @@ func main() {
  说明：添加自定义输出字段，至少传入偶数个参数，参数为 *key-value* 对，*key* 为 *string* 类型，*value* 为任意类型（后文会说明如何添加运行时变化的字段，如 *trace_id*）
 * WithSink(sink Sink)\
  说明：自定义日志输出端，默认是 *nil* ， 只有 *Mode* 为 *holog.Prod* 时才会生效，否则不会将日志输出到外部端
-
+* WithExporter(exporter *otlploghttp.Exporter)\
+ 说明：自定义 *Opentelemetry log exporter* ，默认为 *nil*
 ```golang
 package main
 
