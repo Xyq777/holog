@@ -38,7 +38,8 @@ func main() {
  说明：添加自定义输出字段，至少传入偶数个参数，参数为 *key-value* 对，*key* 为 *string* 类型，*value* 为任意类型（后文会说明如何添加运行时变化的字段，如 *trace_id*）
 * WithSink(sink Sink)\
  说明：自定义日志输出端，默认是 *nil* ， 只有 *Mode* 为 *holog.Prod* 时才会生效，否则不会将日志输出到外部端
-
+* WithExporter(exporter *otlploghttp.Exporter)\
+ 说明：自定义 *Opentelemetry log exporter* ，默认为 *nil*
 ```golang
 package main
 
@@ -98,19 +99,61 @@ func Timestamp(layout string) Valuer {
 	}
 }
 ```
-### Gin日志中间件
+## 中间件
+### Gin
 ```golang
-logger := holog.NewLogger("test-service")
-r := gin.New()
-r.Use(holog.HologGinRequestLogging(logger))
-r.GET("/ping", func(c *gin.Context) {
-	fmt.Println("Received /ping request")
-	time.Sleep(500 * time.Millisecond) 
-	c.JSON(200, gin.H{
-		"message": "pong",
-	})
-})
+// 启用Gin请求日志
+func Logger() gin.HandlerFunc
 ```
+#### 示例
+```golang
+package main
+
+import (
+	"context"
+
+	"github.com/gin-gonic/gin"
+	"github.com/ncuhome/holog"
+	"github.com/ncuhome/holog/middleware/hogin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+)
+
+
+// 若不需要trace后端（jaeger等），expoter部分可以不写并在NewTracerProvider()中删掉sdktrace.WithBatcher(exporter)
+func initTracer() {
+    exporter, err := otlptracehttp.New(context.Background(), otlptracehttp.WithEndpoint("localhost:4318"), otlptracehttp.WithInsecure())
+    if err != nil {
+        panic(err)
+    }
+    tp := sdktrace.NewTracerProvider(
+        sdktrace.WithBatcher(exporter),
+        sdktrace.WithResource(resource.NewWithAttributes(
+            semconv.SchemaURL,
+            semconv.ServiceNameKey.String("your-service"),
+        )),
+    )
+    otel.SetTracerProvider(tp)
+}
+
+func main() {
+    initTracer()
+    r := gin.New()
+    // 如果要给后续中间件内输出的日志带上trace_id，请把otelgin.Middleware()放在第一位
+    r.Use(otelgin.Middleware("test-service"), hogin.Logger())
+    r.GET("/", func(c *gin.Context) {
+    // 传入context以使日志带上trace_id和span_id
+        holog.Ctx(c.Request.Context()).Info("hahaha")
+
+    })
+    r.Run(":8080")
+}
+```
+
 ## 接口
 ```golang
 // 创建logger并使用
@@ -123,13 +166,21 @@ func (l *logger) Error(msg string, kvs ...any)
 func (l *logger) Fatal(msg string, kvs ...any)
 func (l *logger) Panic(msg string, kvs ...any)
 
+func (l *logger) Infof(format string, args ...any) 
+func (l *logger) Warnf(format string, args ...any) 
+func (l *logger) Debugf(format string, args ...any)
+func (l *logger) Errorf(format string, args ...any) 
+func (l *logger) Fatalf(format string, args ...any)
+func (l *logger) Panicf(format string, args ...any)
+
+
 // 自定义选项
 func WithFileWriter(lumberjackLogger *lumberjack.Logger) Option 
 func WithMode(mode Mode) Option 
 func WithOutputStyle(style OutputStyle) Option 
 func WithFields(fields ...any) Option 
 func WithSink(sink sink.Sink) Option
-
+func WithExporter(exporter *otlploghttp.Exporter) Option
 
 // 创建logger后绑定到全局，方便使用
 func SetGlobal(newLogger *logger)
@@ -141,14 +192,22 @@ func Error(msg string, kvs ...any)
 func Fatal(msg string, kvs ...any)
 func Panic(msg string, kvs ...any)
 
-// 日志的外部输出端，可以是 OpenObserve、ElasticSearch、Kafka 等
+func Infof(format string, args ...any) 
+func Debugf(format string, args ...any)
+func Warnf(format string, args ...any) 
+func Errorf(format string, args ...any)
+func Fatalf(format string, args ...any)
+func Panicf(format string, args ...any)
+
+
+// 日志的外部输出端，可以是 OpenObserve、ElasticSearch、Kafka 等，默认为空
 type Sink interface {
 	Send(ctx context.Context, entry LogEntry) error
 	SendBatch(ctx context.Context, entries []LogEntry) error
 }
 
-// Gin日志中间件
-func HologGinRequestLogging(logger *logger) gin.HandlerFunc 
+// Gin中间件
+func Logger() gin.HandlerFunc
 
 ```
 

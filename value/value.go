@@ -63,7 +63,7 @@ func Caller() Valuer {
 				return file[idx+1:] + ":" + strconv.Itoa(line)
 			}
 			idx = strings.LastIndexByte(file[:idx], '/')
-			if file[idx+1:] == "holog/global.go" {
+			if strings.HasPrefix(file[idx+1:], "holog") && (strings.Contains(file[idx+1:], "log.go") || strings.Contains(file[idx+1:], "global.go")) {
 				depth++
 			} else {
 				return file[idx+1:] + ":" + strconv.Itoa(line)

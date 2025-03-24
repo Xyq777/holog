@@ -8,6 +8,9 @@ import (
 	"github.com/ncuhome/holog/level"
 	"github.com/ncuhome/holog/sink"
 	"github.com/ncuhome/holog/utils"
+	"go.opentelemetry.io/contrib/bridges/otelzap"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+	"go.opentelemetry.io/otel/sdk/log"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -27,12 +30,14 @@ var DefaultEncoder = zapcore.EncoderConfig{
 	EncodeDuration: zapcore.SecondsDurationEncoder,
 }
 
-func NewZappLogger(lumberjackLogger *lumberjack.Logger, mode uint8) *ZapLogger {
+func NewZappLogger(lumberjackLogger *lumberjack.Logger, exporter *otlploghttp.Exporter, serviceName string, mode uint8) *ZapLogger {
 	return newZapLoggerWithConfigs(
 		DefaultEncoder,
 		zap.NewAtomicLevelAt(zapcore.DebugLevel),
 		lumberjackLogger,
+		exporter,
 		mode,
+		serviceName,
 		zap.AddStacktrace(
 			zap.NewAtomicLevelAt(zapcore.ErrorLevel)),
 		zap.AddCaller(),
@@ -45,38 +50,48 @@ func getLogWriter(lumberJackLogger *lumberjack.Logger) zapcore.WriteSyncer {
 	return zapcore.AddSync(lumberJackLogger)
 }
 
-func newZapLoggerWithConfigs(encoder zapcore.EncoderConfig, level zap.AtomicLevel, lumberJackLogger *lumberjack.Logger, style uint8, opts ...zap.Option) *ZapLogger {
+func newZapLoggerWithConfigs(encoder zapcore.EncoderConfig, level zap.AtomicLevel, lumberJackLogger *lumberjack.Logger, exporter *otlploghttp.Exporter, style uint8, serviceName string, opts ...zap.Option) *ZapLogger {
 	level.SetLevel(zap.InfoLevel)
 	var core zapcore.Core
+	var processor *log.BatchProcessor
+	var provider *log.LoggerProvider
+	if exporter != nil {
+		processor = log.NewBatchProcessor(exporter)
+		provider = log.NewLoggerProvider(
+			log.WithProcessor(processor),
+		)
+	} else {
+		provider = log.NewLoggerProvider()
+	}
 	if lumberJackLogger != nil {
 		writeSyncer := getLogWriter(lumberJackLogger)
 		if style != 1 {
-			core = zapcore.NewCore(
+			core = zapcore.NewTee(zapcore.NewCore(
 				zapcore.NewJSONEncoder(encoder),
 				zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(writeSyncer)),
 				level,
-			)
+			), otelzap.NewCore(serviceName, otelzap.WithLoggerProvider(provider)))
 		} else {
-			core = zapcore.NewCore(
+			core = zapcore.NewTee(zapcore.NewCore(
 				zapcore.NewConsoleEncoder(encoder),
 				zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(writeSyncer)),
 				level,
-			)
+			), otelzap.NewCore(serviceName, otelzap.WithLoggerProvider(provider)))
 		}
 
 	} else {
 		if style != 1 {
-			core = zapcore.NewCore(
+			core = zapcore.NewTee(zapcore.NewCore(
 				zapcore.NewJSONEncoder(encoder),
 				zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)),
 				level,
-			)
+			), otelzap.NewCore(serviceName, otelzap.WithLoggerProvider(provider)))
 		} else {
-			core = zapcore.NewCore(
+			core = zapcore.NewTee(zapcore.NewCore(
 				zapcore.NewConsoleEncoder(encoder),
 				zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)),
 				level,
-			)
+			), otelzap.NewCore(serviceName, otelzap.WithLoggerProvider(provider)))
 		}
 	}
 	zapLogger := zap.New(core, opts...)
