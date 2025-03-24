@@ -57,6 +57,7 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 		"timestamp", value.DefaultTimestamp,
 		"caller", value.DefaultCaller,
 		"trace_id", tracing.TraceID(),
+		"span_id", tracing.SpanID(),
 	}
 	prefix = append(prefix, options.fields...)
 	return &logger{logger: zapLogger.NewZappLogger(options.lumberjackLogger, uint8(options.style)),
@@ -208,6 +209,12 @@ func (l *logger) Fatalf(format string, args ...any) {
 
 func (l *logger) Panicf(format string, args ...any) {
 	l.Panic(fmt.Sprintf(format, args...))
+}
+
+func (l *logger) Ctx(ctx context.Context) *logger {
+	logger := l.copy()
+	logger.ctx = ctx
+	return logger
 }
 
 func getKeyVals(prefix []any, kvs []any) []any {

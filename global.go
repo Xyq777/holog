@@ -36,16 +36,6 @@ func GetGlobal() *logger {
 	return getGlobal()
 }
 
-func CopyGlobal() *logger {
-	return getGlobal().copy()
-}
-
-func CopyGlobalWithContext(ctx context.Context) *logger {
-	logger := getGlobal().copy()
-	logger.ctx = ctx
-	return logger
-}
-
 // Global methos
 func Info(msg string, kvs ...any) {
 	getGlobal().Info(msg, kvs...)
@@ -72,7 +62,6 @@ func Infof(format string, args ...any) {
 }
 
 func Debugf(format string, args ...any) {
-	fmt.Println("到这")
 	getGlobal().Debug(fmt.Sprintf(format, args...))
 }
 func Warnf(format string, args ...any) {
@@ -86,4 +75,10 @@ func Fatalf(format string, args ...any) {
 }
 func Panicf(format string, args ...any) {
 	getGlobal().Panic(fmt.Sprintf(format, args...))
+}
+
+func Ctx(ctx context.Context) *logger {
+	logger := getGlobal().copy()
+	logger.ctx = ctx
+	return logger
 }

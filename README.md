@@ -101,8 +101,6 @@ func Timestamp(layout string) Valuer {
 ## 中间件
 ### Gin
 ```golang
-// 将Gin请求纳入trace
-func Trace() gin.HandlerFunc
 // 启用Gin请求日志
 func Logger() gin.HandlerFunc
 ```
@@ -111,20 +109,21 @@ func Logger() gin.HandlerFunc
 package main
 
 import (
-    "context"
+	"context"
 
-    "github.com/gin-gonic/gin"
-    "github.com/ncuhome/holog"
-    "github.com/ncuhome/holog/middleware/hogin"
-    "go.opentelemetry.io/otel"
-    "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
-    "go.opentelemetry.io/otel/sdk/resource"
-    sdktrace "go.opentelemetry.io/otel/sdk/trace"
-    semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"github.com/gin-gonic/gin"
+	"github.com/ncuhome/holog"
+	"github.com/ncuhome/holog/middleware/hogin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
-// 若不需要trace后端（jaeger等），该函数可以不写
-// 若不写该函数，holog会使用雪花算法生成一个trace_id
+
+// 若不需要trace后端（jaeger等），expoter部分可以不写并在NewTracerProvider()中删掉sdktrace.WithBatcher(exporter)
 func initTracer() {
     exporter, err := otlptracehttp.New(context.Background(), otlptracehttp.WithEndpoint("localhost:4318"), otlptracehttp.WithInsecure())
     if err != nil {
@@ -143,13 +142,11 @@ func initTracer() {
 func main() {
     initTracer()
     r := gin.New()
-    // 注意！！如果要给后续中间件内输出的日志带上trace_id，请把holog.Trace()放在第一位
-    // 自定义中间件内日志如何输出trace_id，请参考Electric-be项目的Auth()中间件的写法（其实和handler里写法一样）
-    r.Use(hogin.Trace(), hogin.Logger())
+    // 如果要给后续中间件内输出的日志带上trace_id，请把otelgin.Middleware()放在第一位
+    r.Use(otelgin.Middleware("test-service"), hogin.Logger())
     r.GET("/", func(c *gin.Context) {
-        // 注意！！如果要让一笔请求中输出的所有日志带上trace_id，请按照以下写法而不要使用全局logger：
-        logger := holog.FromGinContext(c)
-        logger.Info("12345")
+    // 传入context以使日志带上trace_id和span_id
+        holog.Ctx(c.Request.Context()).Info("hahaha")
 
     })
     r.Run(":8080")
@@ -167,6 +164,14 @@ func (l *logger) Debug(msg string, kvs ...any)
 func (l *logger) Error(msg string, kvs ...any) 
 func (l *logger) Fatal(msg string, kvs ...any)
 func (l *logger) Panic(msg string, kvs ...any)
+
+func (l *logger) Infof(format string, args ...any) 
+func (l *logger) Warnf(format string, args ...any) 
+func (l *logger) Debugf(format string, args ...any)
+func (l *logger) Errorf(format string, args ...any) 
+func (l *logger) Fatalf(format string, args ...any)
+func (l *logger) Panicf(format string, args ...any)
+
 
 // 自定义选项
 func WithFileWriter(lumberjackLogger *lumberjack.Logger) Option 
@@ -186,14 +191,22 @@ func Error(msg string, kvs ...any)
 func Fatal(msg string, kvs ...any)
 func Panic(msg string, kvs ...any)
 
-// 日志的外部输出端，可以是 OpenObserve、ElasticSearch、Kafka 等
+func Infof(format string, args ...any) 
+func Debugf(format string, args ...any)
+func Warnf(format string, args ...any) 
+func Errorf(format string, args ...any)
+func Fatalf(format string, args ...any)
+func Panicf(format string, args ...any)
+
+
+// 日志的外部输出端，可以是 OpenObserve、ElasticSearch、Kafka 等，默认为空
 type Sink interface {
 	Send(ctx context.Context, entry LogEntry) error
 	SendBatch(ctx context.Context, entries []LogEntry) error
 }
 
-// Gin日志中间件
-func HologGinRequestLogging(logger *logger) gin.HandlerFunc 
+// Gin中间件
+func Logger() gin.HandlerFunc
 
 ```
 

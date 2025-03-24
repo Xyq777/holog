@@ -12,7 +12,7 @@ import (
 
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		logger := holog.FromGinContext(c)
+		logger := holog.Ctx(c.Request.Context())
 		if logger == nil {
 			logger = holog.GetGlobal()
 		}
