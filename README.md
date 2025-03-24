@@ -180,7 +180,7 @@ func WithMode(mode Mode) Option
 func WithOutputStyle(style OutputStyle) Option 
 func WithFields(fields ...any) Option 
 func WithSink(sink sink.Sink) Option
-
+func WithExporter(exporter *otlploghttp.Exporter) Option
 
 // 创建logger后绑定到全局，方便使用
 func SetGlobal(newLogger *logger)
