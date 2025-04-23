@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	globalLogger     *logger
+	globalLogger     *Logger
 	globalLoggerOnce sync.Once
 	globalMu         sync.RWMutex
 )
@@ -17,14 +17,14 @@ func init() {
 		globalLogger = NewLogger("")
 	})
 }
-func getGlobal() *logger {
+func getGlobal() *Logger {
 	if globalLogger == nil {
-		panic("logger not initialized")
+		panic("Logger not initialized")
 	}
 	return globalLogger
 }
 
-func SetGlobal(newLogger *logger) {
+func SetGlobal(newLogger *Logger) {
 	globalMu.Lock()
 	defer globalMu.Unlock()
 	old := globalLogger
@@ -32,7 +32,7 @@ func SetGlobal(newLogger *logger) {
 	old.Close()
 }
 
-func GetGlobal() *logger {
+func GetGlobal() *Logger {
 	return getGlobal()
 }
 
@@ -77,7 +77,7 @@ func Panicf(format string, args ...any) {
 	getGlobal().Panic(fmt.Sprintf(format, args...))
 }
 
-func Ctx(ctx context.Context) *logger {
+func Ctx(ctx context.Context) *Logger {
 	logger := getGlobal().copy()
 	logger.ctx = ctx
 	return logger

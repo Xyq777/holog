@@ -27,13 +27,13 @@ const (
 	TEXT
 )
 
-type Logger interface {
+type LoggerItf interface {
 	Log(level level.Level, msg string, kvs ...any) (sink.LogEntry, error)
 	Close()
 }
 
-type logger struct {
-	logger    Logger
+type Logger struct {
+	logger    LoggerItf
 	prefix    []any
 	hasValuer bool
 	ctx       context.Context
@@ -41,7 +41,7 @@ type logger struct {
 	sink      sink.Sink
 }
 
-func NewLogger(serviceName string, opts ...Option) *logger {
+func NewLogger(serviceName string, opts ...Option) *Logger {
 	options := options{
 		lumberjackLogger: nil,
 		mode:             Dev,
@@ -61,7 +61,7 @@ func NewLogger(serviceName string, opts ...Option) *logger {
 		"span_id", tracing.SpanID(),
 	}
 	prefix = append(prefix, options.fields...)
-	return &logger{logger: zapLogger.NewZappLogger(options.lumberjackLogger, options.exporter, serviceName, uint8(options.style)),
+	return &Logger{logger: zapLogger.NewZappLogger(options.lumberjackLogger, options.exporter, serviceName, uint8(options.style)),
 		prefix:    prefix,
 		hasValuer: value.ContainsValuer(prefix),
 		ctx:       context.Background(),
@@ -73,7 +73,7 @@ type Option func(o *options)
 
 // Only supports zap now
 type options struct {
-	// logger Logger
+	// Logger LoggerItf
 	mode             Mode
 	style            OutputStyle
 	lumberjackLogger *lumberjack.Logger
@@ -122,12 +122,12 @@ func WithSink(sink sink.Sink) Option {
 	}
 }
 
-func (l *logger) Close() {
+func (l *Logger) Close() {
 	l.logger.Close()
 }
 
-func (l *logger) copy() *logger {
-	return &logger{
+func (l *Logger) copy() *Logger {
+	return &Logger{
 		logger:    l.logger,
 		prefix:    l.prefix,
 		hasValuer: l.hasValuer,
@@ -137,7 +137,7 @@ func (l *logger) copy() *logger {
 	}
 }
 
-func (l *logger) Info(msg string, kvs ...any) {
+func (l *Logger) Info(msg string, kvs ...any) {
 	keyvals := getKeyVals(l.prefix, kvs)
 	if l.hasValuer {
 		value.BindValues(l.ctx, keyvals)
@@ -147,7 +147,7 @@ func (l *logger) Info(msg string, kvs ...any) {
 		l.sink.Send(l.ctx, logEntry)
 	}
 }
-func (l *logger) Warn(msg string, kvs ...any) {
+func (l *Logger) Warn(msg string, kvs ...any) {
 	keyvals := getKeyVals(l.prefix, kvs)
 	if l.hasValuer {
 		value.BindValues(l.ctx, keyvals)
@@ -157,7 +157,7 @@ func (l *logger) Warn(msg string, kvs ...any) {
 		l.sink.Send(l.ctx, logEntry)
 	}
 }
-func (l *logger) Debug(msg string, kvs ...any) {
+func (l *Logger) Debug(msg string, kvs ...any) {
 	keyvals := getKeyVals(l.prefix, kvs)
 	if l.hasValuer {
 		value.BindValues(l.ctx, keyvals)
@@ -167,7 +167,7 @@ func (l *logger) Debug(msg string, kvs ...any) {
 		l.sink.Send(l.ctx, logEntry)
 	}
 }
-func (l *logger) Error(msg string, kvs ...any) {
+func (l *Logger) Error(msg string, kvs ...any) {
 	keyvals := getKeyVals(l.prefix, kvs)
 	if l.hasValuer {
 		value.BindValues(l.ctx, keyvals)
@@ -177,7 +177,7 @@ func (l *logger) Error(msg string, kvs ...any) {
 		l.sink.Send(l.ctx, logEntry)
 	}
 }
-func (l *logger) Fatal(msg string, kvs ...any) {
+func (l *Logger) Fatal(msg string, kvs ...any) {
 	keyvals := getKeyVals(l.prefix, kvs)
 	if l.hasValuer {
 		value.BindValues(l.ctx, keyvals)
@@ -187,7 +187,7 @@ func (l *logger) Fatal(msg string, kvs ...any) {
 		l.sink.Send(l.ctx, logEntry)
 	}
 }
-func (l *logger) Panic(msg string, kvs ...any) {
+func (l *Logger) Panic(msg string, kvs ...any) {
 	keyvals := getKeyVals(l.prefix, kvs)
 	if l.hasValuer {
 		value.BindValues(l.ctx, keyvals)
@@ -198,29 +198,29 @@ func (l *logger) Panic(msg string, kvs ...any) {
 	}
 }
 
-func (l *logger) Infof(format string, args ...any) {
+func (l *Logger) Infof(format string, args ...any) {
 	l.Info(fmt.Sprintf(format, args...))
 }
 
-func (l *logger) Debugf(format string, args ...any) {
+func (l *Logger) Debugf(format string, args ...any) {
 	l.Debug(fmt.Sprintf(format, args...))
 }
 
-func (l *logger) Warnf(format string, args ...any) {
+func (l *Logger) Warnf(format string, args ...any) {
 	l.Warn(fmt.Sprintf(format, args...))
 }
-func (l *logger) Errorf(format string, args ...any) {
+func (l *Logger) Errorf(format string, args ...any) {
 	l.Error(fmt.Sprintf(format, args...))
 }
-func (l *logger) Fatalf(format string, args ...any) {
+func (l *Logger) Fatalf(format string, args ...any) {
 	l.Fatal(fmt.Sprintf(format, args...))
 }
 
-func (l *logger) Panicf(format string, args ...any) {
+func (l *Logger) Panicf(format string, args ...any) {
 	l.Panic(fmt.Sprintf(format, args...))
 }
 
-func (l *logger) Ctx(ctx context.Context) *logger {
+func (l *Logger) Ctx(ctx context.Context) *Logger {
 	logger := l.copy()
 	logger.ctx = ctx
 	return logger

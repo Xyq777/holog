@@ -17,7 +17,7 @@ func main() {
 		Compress:   false,
 	}))
 
-	// logger := holog.NewLogger("test-service", holog, holog.WithMode(holog.Dev), holog.WithFileWriter(&lumberjack.Logger{
+	// logger := holog.NewLogger("test-service", holog, holog.WithMode(holog.Dev), holog.WithFileWriter(&lumberjack.LoggerItf{
 	// 	Filename:   "./zap.log",
 	// 	MaxSize:    10,
 	// 	MaxBackups: 5,
