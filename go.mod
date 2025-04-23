@@ -1,4 +1,4 @@
-module github.com/ncuhome/holog
+module github.com/xyq777/holog
 
 go 1.23.2
 
